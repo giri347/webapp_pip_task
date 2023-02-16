@@ -11,4 +11,4 @@ tags = {
 
 os_type = "Linux"
 sku_name = "B1"
-wappname = "einfowebapp-151694"
+wappname = "einfowebappdev-pip-347"
