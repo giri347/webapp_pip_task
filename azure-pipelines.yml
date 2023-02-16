@@ -27,14 +27,17 @@ pool:
 
 stages:
   - stage: dev
+    displayName: Infra-devlopment
     jobs:
       - job: dev
         steps:
         - checkout: self
         - task: TerraformInstaller@1
+          displayName: Terraform install
           inputs:
             terraformVersion: 'latest'
         - task: TerraformTaskV4@4
+          displayName: terraform init
           inputs:
             provider: 'azurerm'
             command: 'init'
@@ -44,11 +47,13 @@ stages:
             backendAzureRmContainerName: 'data'
             backendAzureRmKey: 'terraform.tfstate'
         - task: TerraformTaskV4@4
+          displayName: terraform plan
           inputs:
             provider: 'azurerm'
             command: 'plan'
             environmentServiceNameAzureRM: 'einfo-terraform'
         - task: TerraformTaskV4@4
+          displayName: terraform apply
           inputs:
             provider: 'azurerm'
             command: 'apply'
@@ -63,7 +68,9 @@ stages:
       
    
   - stage: build
+    displayName: Code_Qulity_Check
     dependsOn: dev
+
     jobs:
       - job: build
         steps:
@@ -82,11 +89,13 @@ stages:
               projectKey: 'giri347_webappdeploy-AzureDevops'
               projectName: 'sonar'
           - task: VSBuild@1
+            displayName: vsbuild
             inputs:
               solution: '$(solution)'
               platform: '$(buildPlatform)'
               configuration: '$(buildconfiguration)'
           - task: VSTest@2
+            displayName: vstest
             inputs:
               testSelector: 'testAssemblies'
               testAssemblyVer2: |
@@ -109,6 +118,7 @@ stages:
               SonarCloud: 'Sonar-connection'
               organization: 'giri347'
   - stage: deploy
+    displayName: Deploycode-webapp
     dependsOn: build
     condition: succeeded()
     
@@ -134,6 +144,7 @@ stages:
               ArtifactName: 'drop'
               publishLocation: 'Container'
           - task: AzureRmWebAppDeployment@4
+            displayName: Deploycode-webapp
             inputs:
               ConnectionType: 'AzureRM'
               azureSubscription: 'einfo-terraform'
