@@ -138,7 +138,7 @@ stages:
               ConnectionType: 'AzureRM'
               azureSubscription: 'einfo-terraform'
               appType: 'webAppLinux'
-              WebAppName: 'einfowebapp-151694'
+              WebAppName: 'einfowebappdev-pip-347'
               packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
           
 
