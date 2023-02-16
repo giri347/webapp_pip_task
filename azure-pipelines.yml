@@ -54,15 +54,16 @@ stages:
             command: 'apply'
             commandOptions: '-auto-approve'
             environmentServiceNameAzureRM: 'einfo-terraform'
-        - task: TerraformTaskV4@4
-          inputs:
-            provider: 'azurerm'
-            command: 'destroy'
-            commandOptions: '-auto-approve'
-            environmentServiceNameAzureRM: 'einfo-terraform'
+        # - task: TerraformTaskV4@4
+        #   inputs:
+        #     provider: 'azurerm'
+        #     command: 'destroy'
+        #     commandOptions: '-auto-approve'
+        #     environmentServiceNameAzureRM: 'einfo-terraform'
       
    
   - stage: build
+    dependsOn: dev
     jobs:
       - job: build
         steps:
@@ -107,6 +108,40 @@ stages:
             inputs:
               SonarCloud: 'Sonar-connection'
               organization: 'giri347'
+  - stage: deploy
+    dependsOn: build
+    condition: succeeded()
+    
+    jobs:
+      - job: deploy
+        steps:
+          - checkout: webappdeploy-AzureDevops
+          - task: NuGetToolInstaller@1
+          - task: NuGetCommand@2
+            inputs:
+              command: 'restore'
+              restoreSolution: '$(solution)'
+              feedsToUse: 'select'
+          - task: VSBuild@1
+            inputs:
+              solution: '$(solution)'
+              msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
+              platform: '$(buildPlatform)'
+              configuration: '$(buildConfiguration)'
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+          - task: AzureRmWebAppDeployment@4
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: 'einfo-terraform'
+              appType: 'webAppLinux'
+              WebAppName: 'einfowebapp-151694'
+              packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
+          
+
               
     
   
