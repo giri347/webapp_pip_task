@@ -1,0 +1,155 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+resources:
+  repositories:
+    - repository: webappdeploy-AzureDevops
+      type: github
+      endpoint: giri347
+      name: giri347/webappdeploy-AzureDevops
+    - repository: webapp_pip_task
+      type: github
+      endpoint: giri347
+      name: giri347/webapp_pip_task
+
+
+trigger:
+- main
+variables:
+  solution: '**/*.csproj'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+pool:
+  vmImage: windows-latest
+
+
+stages:
+  - stage: dev
+    jobs:
+      - job: dev
+        steps:
+        - checkout: self
+        - task: TerraformInstaller@1
+          inputs:
+            terraformVersion: 'latest'
+        - task: TerraformTaskV4@4
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            backendServiceArm: 'einfo-terraform'
+            backendAzureRmResourceGroupName: 'sa1_test_eic_DevOpslearning'
+            backendAzureRmStorageAccountName: 'einfoappstore151694'
+            backendAzureRmContainerName: 'data'
+            backendAzureRmKey: 'terraform.tfstate'
+        - task: TerraformTaskV4@4
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            environmentServiceNameAzureRM: 'einfo-terraform'
+        - task: TerraformTaskV4@4
+          inputs:
+            provider: 'azurerm'
+            command: 'apply'
+            commandOptions: '-auto-approve'
+            environmentServiceNameAzureRM: 'einfo-terraform'
+        # - task: TerraformTaskV4@4
+        #   inputs:
+        #     provider: 'azurerm'
+        #     command: 'destroy'
+        #     commandOptions: '-auto-approve'
+        #     environmentServiceNameAzureRM: 'einfo-terraform'
+      
+   
+  - stage: build
+    dependsOn: dev
+    jobs:
+      - job: build
+        steps:
+          - checkout: webappdeploy-AzureDevops
+          - task: NuGetToolInstaller@1
+          - task: NuGetCommand@2
+            inputs:
+              command: 'restore'
+              restoreSolution: '$(solution)'
+              feedsToUse: 'select'
+          - task: SonarCloudPrepare@1
+            inputs:
+              SonarCloud: 'Sonar-connection'
+              organization: 'giri347'
+              scannerMode: 'MSBuild'
+              projectKey: 'giri347_webappdeploy-AzureDevops'
+              projectName: 'sonar'
+          - task: VSBuild@1
+            inputs:
+              solution: '$(solution)'
+              platform: '$(buildPlatform)'
+              configuration: '$(buildconfiguration)'
+          - task: VSTest@2
+            inputs:
+              testSelector: 'testAssemblies'
+              testAssemblyVer2: |
+                **\$(BuildConfiguration)\*test*.dll
+                !**\obj\**
+              searchFolder: '$(System.DefaultWorkingDirectory)'
+              platform: '$(Buildplatform)'
+              configuration: '$(Buildconfiguration)'
+          - task: SonarCloudAnalyze@1
+          - task: SonarCloudPublish@1
+            inputs:
+              pollingTimeoutSec: '300'
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+          - task: sonarcloud-buildbreaker@2
+            inputs:
+              SonarCloud: 'Sonar-connection'
+              organization: 'giri347'
+  - stage: deploy
+    dependsOn: build
+    condition: succeeded()
+    
+    jobs:
+      - job: deploy
+        steps:
+          - checkout: webappdeploy-AzureDevops
+          - task: NuGetToolInstaller@1
+          - task: NuGetCommand@2
+            inputs:
+              command: 'restore'
+              restoreSolution: '$(solution)'
+              feedsToUse: 'select'
+          - task: VSBuild@1
+            inputs:
+              solution: '$(solution)'
+              msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
+              platform: '$(buildPlatform)'
+              configuration: '$(buildConfiguration)'
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+          - task: AzureRmWebAppDeployment@4
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: 'einfo-terraform'
+              appType: 'webAppLinux'
+              WebAppName: 'einfowebappdev-pip-347'
+              packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
+          
+
+              
+    
+  
+          
+          
+          
+
+
+             
+
+
