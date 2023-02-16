@@ -15,7 +15,7 @@ resources:
 
 
 trigger:
-- main
+- none
 variables:
   solution: '**/*.csproj'
   buildPlatform: 'Any CPU'
