@@ -43,7 +43,7 @@ stages:
             command: 'init'
             backendServiceArm: 'einfo-terraform'
             backendAzureRmResourceGroupName: 'sa1_test_eic_DevOpslearning'
-            backendAzureRmStorageAccountName: 'einfoappstore151694'
+            backendAzureRmStorageAccountName: 'appstore1516945566'
             backendAzureRmContainerName: 'data'
             backendAzureRmKey: 'terraform.tfstate'
         - task: TerraformTaskV4@4
