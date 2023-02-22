@@ -16,7 +16,14 @@ provider "azurerm" {
   features {}
   skip_provider_registration = "true"
 }
-
+terraform  {
+	backend "azurerm" {
+	      resource_group_name = "sa1_test_eic_DevOpslearning"
+	      storage_account_name = "appstore1516945566" 
+	      container_name  = "data"
+	      key = "terraform.tfstate"
+	}
+	}
 module "webplan" {
     source = "./module/wplan"
     wplanname = var.wplanname
