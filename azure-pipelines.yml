@@ -26,45 +26,45 @@ pool:
 
 
 stages:
-  - stage: dev
-    displayName: Infra-devlopment
-    jobs:
-      - job: dev
-        steps:
-        - checkout: self
-        - task: TerraformInstaller@1
-          displayName: Terraform install
-          inputs:
-            terraformVersion: 'latest'
-        - task: TerraformTaskV4@4
-          displayName: terraform init
-          inputs:
-            provider: 'azurerm'
-            command: 'init'
-            backendServiceArm: 'einfo-terraform'
-            backendAzureRmResourceGroupName: 'sa1_test_eic_DevOpslearning'
-            backendAzureRmStorageAccountName: 'appstore1516945566'
-            backendAzureRmContainerName: 'data'
-            backendAzureRmKey: 'terraform.tfstate'
-        - task: TerraformTaskV4@4
-          displayName: terraform plan
-          inputs:
-            provider: 'azurerm'
-            command: 'plan'
-            environmentServiceNameAzureRM: 'einfo-terraform'
-        - task: TerraformTaskV4@4
-          displayName: terraform apply
-          inputs:
-            provider: 'azurerm'
-            command: 'apply'
-            commandOptions: '-auto-approve'
-            environmentServiceNameAzureRM: 'einfo-terraform'
-        # - task: TerraformTaskV4@4
-        #   inputs:
-        #     provider: 'azurerm'
-        #     command: 'destroy'
-        #     commandOptions: '-auto-approve'
-        #     environmentServiceNameAzureRM: 'einfo-terraform'
+  # - stage: dev
+  #   displayName: Infra-devlopment
+  #   jobs:
+  #     - job: dev
+  #       steps:
+  #       - checkout: self
+  #       - task: TerraformInstaller@1
+  #         displayName: Terraform install
+  #         inputs:
+  #           terraformVersion: 'latest'
+  #       - task: TerraformTaskV4@4
+  #         displayName: terraform init
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'init'
+  #           backendServiceArm: 'einfo-terraform'
+  #           backendAzureRmResourceGroupName: 'sa1_test_eic_DevOpslearning'
+  #           backendAzureRmStorageAccountName: 'appstore1516945566'
+  #           backendAzureRmContainerName: 'data'
+  #           backendAzureRmKey: 'terraform.tfstate'
+  #       - task: TerraformTaskV4@4
+  #         displayName: terraform plan
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'plan'
+  #           environmentServiceNameAzureRM: 'einfo-terraform'
+  #       - task: TerraformTaskV4@4
+  #         displayName: terraform apply
+  #         inputs:
+  #           provider: 'azurerm'
+  #           command: 'apply'
+  #           commandOptions: '-auto-approve'
+  #           environmentServiceNameAzureRM: 'einfo-terraform'
+  #       # - task: TerraformTaskV4@4
+  #       #   inputs:
+  #       #     provider: 'azurerm'
+  #       #     command: 'destroy'
+  #       #     commandOptions: '-auto-approve'
+  #       #     environmentServiceNameAzureRM: 'einfo-terraform'
       
    
   - stage: build
@@ -117,40 +117,48 @@ stages:
             inputs:
               SonarCloud: 'Sonar-connection'
               organization: 'giri347'
-  - stage: deploy
-    displayName: Deploycode-webapp
-    dependsOn: build
-    condition: succeeded()
-    
-    jobs:
-      - job: deploy
-        steps:
-          - checkout: webappdeploy-AzureDevops
-          - task: NuGetToolInstaller@1
-          - task: NuGetCommand@2
+          - task: PowerShell@2
             inputs:
-              command: 'restore'
-              restoreSolution: '$(solution)'
-              feedsToUse: 'select'
-          - task: VSBuild@1
-            inputs:
-              solution: '$(solution)'
-              msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-              platform: '$(buildPlatform)'
-              configuration: '$(buildConfiguration)'
+              filePath: 'C:\pip-task\myscrpt.ps1'
           - task: PublishBuildArtifacts@1
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-              ArtifactName: 'drop'
+              PathtoPublish: '$(System.DefaultWorkingDirectory)'
+              ArtifactName: 'consoleoutput'
               publishLocation: 'Container'
-          - task: AzureRmWebAppDeployment@4
-            displayName: Deploycode-webapp
-            inputs:
-              ConnectionType: 'AzureRM'
-              azureSubscription: 'einfo-terraform'
-              appType: 'webAppLinux'
-              WebAppName: 'einfowebappdev-pip-347'
-              packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
+
+  #   displayName: Deploycode-webapp
+  #   dependsOn: build
+  #   condition: succeeded()
+    
+  #   jobs:
+  #     - job: deploy
+  #       steps:
+  #         - checkout: webappdeploy-AzureDevops
+  #         - task: NuGetToolInstaller@1
+  #         - task: NuGetCommand@2
+  #           inputs:
+  #             command: 'restore'
+  #             restoreSolution: '$(solution)'
+  #             feedsToUse: 'select'
+  #         - task: VSBuild@1
+  #           inputs:
+  #             solution: '$(solution)'
+  #             msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
+  #             platform: '$(buildPlatform)'
+  #             configuration: '$(buildConfiguration)'
+  #         - task: PublishBuildArtifacts@1
+  #           inputs:
+  #             PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+  #             ArtifactName: 'drop'
+  #             publishLocation: 'Container'
+  #         - task: AzureRmWebAppDeployment@4
+  #           displayName: Deploycode-webapp
+  #           inputs:
+  #             ConnectionType: 'AzureRM'
+  #             azureSubscription: 'einfo-terraform'
+  #             appType: 'webAppLinux'
+  #             WebAppName: 'einfowebappdev-pip-347'
+  #             packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
           
 
               
