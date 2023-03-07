@@ -69,7 +69,7 @@ stages:
    
   - stage: build
     displayName: Code_Qulity_Check
-    dependsOn: dev
+    #dependsOn: dev
 
     jobs:
       - job: build
