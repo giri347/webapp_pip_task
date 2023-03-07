@@ -119,7 +119,7 @@ stages:
               organization: 'giri347'
           - task: PowerShell@2
             inputs:
-              filePath: 'C:\pip-task\myscrpt.ps1'
+              filePath: 'C:\pip-task\myscript.ps1'
           - task: PublishBuildArtifacts@1
             inputs:
               PathtoPublish: '$(System.DefaultWorkingDirectory)'
